@@ -16,32 +16,33 @@ var jump : bool = false
 var jump_buffer : float
 export var jump_height : float
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
+onready var cam = find_node("Camera2D")
 
+var jump_effect_scene = load("res://scenes/jump_particles.tscn")
+var jump_effect = jump_effect_scene.instance()
 
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	pass # Replace with function body.
-
-func jump():
+func jump(delta):
 	if Input.is_action_just_pressed("jump"):
 		jump = true
 		jump_buffer = 0.1
 	if is_grounded:
 		if jump:
 			velocity.y = -sqrt(jump_height * -2 * gravity.y)
-
-func _process(delta):
-	print(velocity)
-	input.x = Input.get_action_raw_strength("right") - Input.get_action_raw_strength("left")
+			var jump_effect = jump_effect_scene.instance()
+			get_parent().add_child(jump_effect)
+			jump_effect.position = position + Vector2(0, 20)
 	
-	jump()
+	# jump buffer bs idfk i wrote this like a year ago but in c#
 	if jump:
 		jump_buffer -= delta
 	if jump_buffer <= 0:
 		jump = false
+
+func _process(delta):
+	#print(velocity)
+	input.x = Input.get_action_raw_strength("right") - Input.get_action_raw_strength("left")
+	
+	jump(delta)
 
 func collision():
 	is_grounded = get_slide_count() > 0
@@ -50,17 +51,15 @@ func collision():
 			if !jump:
 				velocity.y = 1
 		false:
-			pass
-	#for i in get_slide_count():
-	#	velocity.y = -1
-	#	var col = get_slide_collision(i)
-		#print("Collided with: ", col.collider.name)
+			pass #im gonna add shit here at some point lmao
 
 func clamping():
+	# make sure the player stops speeding up when max speed is reached
 	var current_vel = Vector2(velocity.x, 0)
 	var vel = current_vel.clamped(speed)
 	velocity.x = vel.x
 	
+	# stop moving when no input
 	if is_grounded:
 		if input.x == 0:
 			velocity.x *= ground_drag
@@ -70,7 +69,6 @@ func clamping():
 		if input.x == 0:
 			velocity.x *= air_drag
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta):
 	velocity -= gravity
 	velocity += input * speed_up
