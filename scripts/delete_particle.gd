@@ -1,5 +1,7 @@
 extends CPUParticles2D
 
+export var destroy_time : float = 2.0
+
 func _ready():
 	if one_shot:
 		emitting = true

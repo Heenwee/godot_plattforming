@@ -19,7 +19,7 @@ export var jump_height : float
 onready var cam = find_node("Camera2D")
 
 var jump_effect_scene = load("res://scenes/jump_particles.tscn")
-var jump_effect = jump_effect_scene.instance()
+var land_effect_scene = load("res://scenes/land_particles.tscn")
 
 func jump(delta):
 	if Input.is_action_just_pressed("jump"):
@@ -29,8 +29,8 @@ func jump(delta):
 		if jump:
 			velocity.y = -sqrt(jump_height * -2 * gravity.y)
 			var jump_effect = jump_effect_scene.instance()
-			get_parent().add_child(jump_effect)
 			jump_effect.position = position + Vector2(0, 20)
+			get_parent().add_child(jump_effect)
 	
 	# jump buffer bs idfk i wrote this like a year ago but in c#
 	if jump:
@@ -39,19 +39,25 @@ func jump(delta):
 		jump = false
 
 func _process(delta):
-	#print(velocity)
 	input.x = Input.get_action_raw_strength("right") - Input.get_action_raw_strength("left")
 	
 	jump(delta)
 
 func collision():
+	if get_slide_count() > 0 and !is_grounded:
+		# land
+		print("just landed")
+		var land_effect = land_effect_scene.instance()
+		land_effect.position = position + Vector2(0, 20)
+		get_parent().add_child(land_effect)
+	
 	is_grounded = get_slide_count() > 0
 	match is_grounded:
 		true:
 			if !jump:
 				velocity.y = 1
 		false:
-			pass #im gonna add shit here at some point lmao
+			pass # im gonna add shit here at some point lmao
 
 func clamping():
 	# make sure the player stops speeding up when max speed is reached
