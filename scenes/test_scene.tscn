@@ -27,3 +27,9 @@ position = Vector2( -15, -85 )
 
 [node name="Camera2D" type="Camera2D" parent="."]
 current = true
+
+[node name="Sprite" type="Sprite" parent="Camera2D"]
+modulate = Color( 0.294118, 0.294118, 0.294118, 1 )
+scale = Vector2( 10000, 10000 )
+z_index = -1
+texture = ExtResource( 2 )

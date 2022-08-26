@@ -9,6 +9,8 @@ export var speed_up : float = 100
 export var ground_drag : float = 0.9
 export var air_drag : float = 0.95
 
+onready var ground_ray = get_node("ground_ray")
+
 var is_grounded : bool = false
 var is_clamped : bool = true
 
@@ -20,6 +22,7 @@ onready var cam = find_node("Camera2D")
 
 var jump_effect_scene = load("res://scenes/jump_particles.tscn")
 var land_effect_scene = load("res://scenes/land_particles.tscn")
+var stop_effect_scene = load("res://scenes/stop_particles.tscn")
 
 func jump(delta):
 	if Input.is_action_just_pressed("jump"):
@@ -31,6 +34,7 @@ func jump(delta):
 			var jump_effect = jump_effect_scene.instance()
 			jump_effect.position = position + Vector2(0, 20)
 			get_parent().add_child(jump_effect)
+			jump = false
 	
 	# jump buffer bs idfk i wrote this like a year ago but in c#
 	if jump:
@@ -40,24 +44,32 @@ func jump(delta):
 
 func _process(delta):
 	input.x = Input.get_action_raw_strength("right") - Input.get_action_raw_strength("left")
+	if is_grounded:
+		if Input.is_action_just_pressed("left") or Input.is_action_just_pressed("right"):
+			start()
 	
+		if Input.is_action_just_released("left"):
+			stop(-1)
+		if Input.is_action_just_released("right"):
+			stop(1)
+		
 	jump(delta)
 
 func collision():
-	if get_slide_count() > 0 and !is_grounded:
+	if ground_ray.is_colliding() and !is_grounded:
 		# land
 		print("just landed")
 		var land_effect = land_effect_scene.instance()
 		land_effect.position = position + Vector2(0, 20)
 		get_parent().add_child(land_effect)
 	
-	is_grounded = get_slide_count() > 0
+	is_grounded = ground_ray.is_colliding()
 	match is_grounded:
 		true:
-			if !jump:
+			if !jump && velocity.y > 0:
 				velocity.y = 1
 		false:
-			pass # im gonna add shit here at some point lmao
+			pass # im probably gonna add shit here at some point lmao
 
 func clamping():
 	# make sure the player stops speeding up when max speed is reached
@@ -83,3 +95,17 @@ func _physics_process(delta):
 	collision()
 	if is_clamped:
 		clamping()
+
+func start():
+	var stop_effect = stop_effect_scene.instance()
+	stop_effect.position = position + Vector2(0, 20)
+	stop_effect.direction.x = -(Vector2(input.x, 0).normalized()).x
+	get_parent().add_child(stop_effect)
+	
+
+func stop(x_input):
+	var stop_effect = stop_effect_scene.instance()
+	stop_effect.position = position + Vector2(0, 20)
+	stop_effect.direction.x = (Vector2(x_input, 0).normalized()).x
+	get_parent().add_child(stop_effect)
+	
